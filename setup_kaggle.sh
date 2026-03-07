@@ -73,6 +73,23 @@ mkdir -p inference
 mkdir -p dict
 mkdir -p logs
 
+# Create Vietnamese dictionary if not exists
+if [ ! -f "dict/vi_dict.txt" ]; then
+    echo "Creating Vietnamese character dictionary..."
+    python3 -c "
+chars = list('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')
+vi_lower = list('àáảãạăắằẳẵặâấầẩẫậèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵđ')
+vi_upper = list('ÀÁẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬÈÉẺẼẸÊẾỀỂỄỆÌÍỈĨỊÒÓỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÙÚỦŨỤƯỨỪỬỮỰỲÝỶỸỴĐ')
+symbols = list('!\"#\$%&\\'()*+,-./:;<=>?@[\\\\]^_\`{|}~')
+all_chars = chars + vi_lower + vi_upper + symbols
+with open('dict/vi_dict.txt', 'w', encoding='utf-8') as f:
+    f.write('\n'.join(all_chars) + '\n')
+print(f'✓ Created vi_dict.txt with {len(all_chars)} characters')
+"
+else
+    echo "✓ Vietnamese dictionary exists"
+fi
+
 echo "✓ Directories created"
 
 # Step 7: Verify installation
