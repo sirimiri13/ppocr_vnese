@@ -61,7 +61,7 @@ echo "✓ Config paths fixed"
 echo -e "\n${BLUE}[4/5]${NC} ${GREEN}Starting training...${NC}"
 echo -e "${YELLOW}Config: $BASE_DIR/config.yml${NC}"
 echo -e "${YELLOW}Epochs: 100${NC}"
-echo -e "${YELLOW}Batch size: 128${NC}"
+echo -e "${YELLOW}Batch size: 32${NC}"
 
 # Verify critical files before training
 echo ""
@@ -96,6 +96,9 @@ python -m paddle.distributed.launch \
     -o Train.dataset.label_file_list="['$BASE_DIR/data/train_list.txt']" \
     -o Eval.dataset.data_dir="$BASE_DIR/data/" \
     -o Eval.dataset.label_file_list="['$BASE_DIR/data/val_list.txt']" \
+    -o Train.loader.batch_size_per_card=32 \
+    -o Train.sampler.first_bs=32 \
+    -o Train.loader.num_workers=4 \
     2>&1 | tee "$BASE_DIR/$LOG_FILE"
 
 cd "$BASE_DIR"
