@@ -48,14 +48,13 @@ else
     echo "✓ Pretrained model exists"
 fi
 
-# Step 3: Fix config paths
+# Step 3: Fix config paths to match current directory
 echo -e "\n${BLUE}[3/5]${NC} ${GREEN}Fixing config paths...${NC}"
 python "$BASE_DIR/prepare_data.py" \
     --input_dir /dev/null \
+    --output_dir "$BASE_DIR/data" \
     --fix_config "$BASE_DIR/config.yml" \
-    --base_dir "$BASE_DIR" || {
-    echo "⚠️  Config fix skipped"
-}
+    --base_dir "$BASE_DIR"
 echo "✓ Config paths fixed"
 
 # Step 4: Train
