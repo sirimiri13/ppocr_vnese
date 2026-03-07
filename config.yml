@@ -2,7 +2,7 @@ Global:
   model_name: vietnamese_PP-OCRv5_mobile_rec
   debug: false
   use_gpu: true
-  epoch_num: 100  # Tăng từ 5 lên 100 cho test
+  epoch_num: 100 # Tăng từ 5 lên 100 cho test
   log_smooth_window: 20
   print_batch_step: 10
   save_model_dir: output/vi_ppocr_v5
@@ -64,7 +64,7 @@ Loss:
     - CTCLoss:
     - NRTRLoss:
 
-PostProcess:  
+PostProcess:
   name: CTCLabelDecode
 
 Metric:

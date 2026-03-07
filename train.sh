@@ -62,6 +62,21 @@ echo -e "\n${BLUE}[4/5]${NC} ${GREEN}Starting training...${NC}"
 echo -e "${YELLOW}Config: $BASE_DIR/config.yml${NC}"
 echo -e "${YELLOW}Epochs: 100${NC}"
 echo -e "${YELLOW}Batch size: 128${NC}"
+
+# Verify critical files before training
+echo ""
+echo "🔍 Verifying paths..."
+for f in "$BASE_DIR/dict/vi_dict.txt" \
+         "$BASE_DIR/data/train_list.txt" \
+         "$BASE_DIR/data/val_list.txt" \
+         "$BASE_DIR/pretrain_models/PP-OCRv5_mobile_rec_pretrained.pdparams"; do
+    if [ -f "$f" ]; then
+        echo "  ✓ $(basename $f)"
+    else
+        echo "  ❌ MISSING: $f"
+        exit 1
+    fi
+done
 echo ""
 
 LOG_FILE="logs/train_$(date +%Y%m%d_%H%M%S).log"
@@ -73,6 +88,14 @@ python -m paddle.distributed.launch \
     --gpus '0,1' \
     tools/train.py \
     -c "$BASE_DIR/config.yml" \
+    -o Global.pretrained_model="$BASE_DIR/pretrain_models/PP-OCRv5_mobile_rec_pretrained.pdparams" \
+    -o Global.character_dict_path="$BASE_DIR/dict/vi_dict.txt" \
+    -o Global.save_model_dir="$BASE_DIR/output/vi_ppocr_v5" \
+    -o Global.save_res_path="$BASE_DIR/output/rec/predicts_vi.txt" \
+    -o Train.dataset.data_dir="$BASE_DIR/data/" \
+    -o Train.dataset.label_file_list="['$BASE_DIR/data/train_list.txt']" \
+    -o Eval.dataset.data_dir="$BASE_DIR/data/" \
+    -o Eval.dataset.label_file_list="['$BASE_DIR/data/val_list.txt']" \
     2>&1 | tee "$BASE_DIR/$LOG_FILE"
 
 cd "$BASE_DIR"
