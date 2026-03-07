@@ -1,0 +1,22 @@
+# PaddleOCR v5 Vietnamese Requirements
+
+# Core
+paddlepaddle-gpu==3.0.0b1
+# Use paddlepaddle==3.0.0b1 for CPU only
+
+# PaddleOCR dependencies
+opencv-python>=4.8.0
+Pillow>=10.0.0
+numpy>=1.24.0
+shapely>=2.0.0
+scikit-image>=0.21.0
+imgaug>=0.4.0
+lmdb>=1.4.0
+
+# Visualization
+matplotlib>=3.7.0
+visualdl>=2.5.0
+
+# Utilities
+tqdm>=4.65.0
+pyyaml>=6.0

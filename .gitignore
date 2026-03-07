@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+*.egg-info/
+
+# Data
+data/
+!data/.gitkeep
+
+# Models
+output/
+inference/
+pretrain_models/
+
+# Dictionary (generated)
+dict/
+
+# Logs
+logs/
+*.log
+
+# PaddleOCR
+PaddleOCR/
+
+# Test files
+test_result.png
+training_curves.png
+*.tar.gz
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
