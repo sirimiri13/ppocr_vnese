@@ -2,11 +2,11 @@ Global:
   model_name: vietnamese_PP-OCRv5_mobile_rec
   debug: false
   use_gpu: true
-  epoch_num: 100 # Tăng từ 5 lên 100 cho test
+  epoch_num: 50 # Vừa đủ cho 12h Kaggle session
   log_smooth_window: 20
   print_batch_step: 10
   save_model_dir: output/vi_ppocr_v5
-  save_epoch_step: 10
+  save_epoch_step: 3 # Save mỗi 3 epochs để resume khi Kaggle timeout
   eval_batch_step: [0, 500]
   cal_metric_during_train: true
   pretrained_model: pretrain_models/PP-OCRv5_mobile_rec_pretrained.pdparams
@@ -28,8 +28,8 @@ Optimizer:
   beta2: 0.999
   lr:
     name: Cosine
-    learning_rate: 0.0005
-    warmup_epoch: 5
+    learning_rate: 0.002 # Tăng từ 0.0005 vì head layer train từ random
+    warmup_epoch: 2 # Giảm warmup để học nhanh hơn
   regularizer:
     name: L2
     factor: 3.0e-05
