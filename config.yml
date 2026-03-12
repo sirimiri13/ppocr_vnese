@@ -2,25 +2,25 @@ Global:
   model_name: vietnamese_PP-OCRv5_mobile_rec
   debug: false
   use_gpu: true
-  epoch_num: 50  # Từ notebook thành công
+  epoch_num: 50 # Từ notebook thành công
   log_smooth_window: 20
   print_batch_step: 10
-  save_model_dir: /kaggle/working/paddleocr-v5-vietnamese/output/vi_ppocr_v5
+  save_model_dir: /kaggle/working/ppocr_vnese/output/vi_ppocr_v5
   save_epoch_step: 10
   eval_batch_step: [0, 500]
   cal_metric_during_train: true
-  pretrained_model: /kaggle/working/paddleocr-v5-vietnamese/pretrain_models/latin_PP-OCRv5_mobile_rec_pretrained.pdparams
+  pretrained_model: /kaggle/working/ppocr_vnese/pretrain_models/latin_PP-OCRv5_mobile_rec_pretrained.pdparams
   checkpoints:
   save_inference_dir:
   use_visualdl: false
   infer_img:
-  character_dict_path: /kaggle/working/paddleocr-v5-vietnamese/dict/vi_dict.txt
-  max_text_length: &max_text_length 96  # Tăng từ 40 lên 96 như notebook
+  character_dict_path: /kaggle/working/ppocr_vnese/dict/vi_dict.txt
+  max_text_length: &max_text_length 96 # Tăng từ 40 lên 96 như notebook
   infer_mode: false
   use_space_char: true
   distributed: true
-  save_res_path: /kaggle/working/paddleocr-v5-vietnamese/output/rec/predicts_vi.txt
-  d2s_train_image_shape: [3, 48, 640]  # Tăng width từ 320 lên 640
+  save_res_path: /kaggle/working/ppocr_vnese/output/rec/predicts_vi.txt
+  d2s_train_image_shape: [3, 48, 640] # Tăng width từ 320 lên 640
 
 Optimizer:
   name: Adam
@@ -64,7 +64,7 @@ Loss:
     - CTCLoss:
     - NRTRLoss:
 
-PostProcess:  
+PostProcess:
   name: CTCLabelDecode
 
 Metric:
@@ -76,10 +76,10 @@ Train:
   dataset:
     name: MultiScaleDataSet
     ds_width: false
-    data_dir: /kaggle/working/paddleocr-v5-vietnamese/data/
+    data_dir: /kaggle/working/ppocr_vnese/data/
     ext_op_transform_idx: 1
     label_file_list:
-      - /kaggle/working/paddleocr-v5-vietnamese/data/train_list.txt
+      - /kaggle/working/ppocr_vnese/data/train_list.txt
     transforms:
       - DecodeImage:
           img_mode: BGR
@@ -116,9 +116,9 @@ Train:
 Eval:
   dataset:
     name: SimpleDataSet
-    data_dir: /kaggle/working/paddleocr-v5-vietnamese/data/
+    data_dir: /kaggle/working/ppocr_vnese/data/
     label_file_list:
-      - /kaggle/working/paddleocr-v5-vietnamese/data/val_list.txt
+      - /kaggle/working/ppocr_vnese/data/val_list.txt
     transforms:
       - DecodeImage:
           img_mode: BGR

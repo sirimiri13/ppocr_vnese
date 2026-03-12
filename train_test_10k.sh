@@ -39,7 +39,7 @@ fi
 
 # Step 2: Check pretrained
 echo -e "\n${BLUE}[2/5]${NC} ${GREEN}Checking pretrained model...${NC}"
-if [ ! -f "pretrain_models/latin_PP-OCRv5_mobile_rec_pretrained.pdparams" ]; then
+if [ ! -f "/kaggle/working/ppocr_vnese/pretrain_models/PP-OCRv5_mobile_rec_pretrained.pdparams" ]; then
     echo -e "${YELLOW}❌ Pretrained model not found!${NC}"
     echo "Please run: bash setup_kaggle.sh first"
     exit 1
@@ -54,7 +54,7 @@ import yaml, os
 with open('config_test_10k.yml', 'r') as f:
     cfg = yaml.safe_load(f)
 
-base = '/kaggle/working/paddleocr-v5-vietnamese'
+base = '/kaggle/working/ppocr_vnese'
 cfg['Global']['character_dict_path'] = os.path.join(base, 'dict/vi_dict.txt')
 cfg['Global']['pretrained_model'] = os.path.join(base, 'pretrain_models/latin_PP-OCRv5_mobile_rec_pretrained.pdparams')
 cfg['Global']['save_model_dir'] = os.path.join(base, 'output/test_10k')
