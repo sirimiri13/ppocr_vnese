@@ -46,13 +46,29 @@ if [ ! -f "pretrain_models/latin_PP-OCRv5_mobile_rec_pretrained.pdparams" ]; the
 fi
 echo "✓ Pretrained model exists"
 
-# Step 3: Fix config paths
+# Step 3: Fix config paths (if needed)
 echo -e "\n${BLUE}[3/5]${NC} ${GREEN}Fixing config paths...${NC}"
-python prepare_data.py \
-    --input_dir /dev/null \
-    --fix_config config_test_10k.yml \
-    --base_dir /kaggle/working/paddleocr-v5-vietnamese 2>/dev/null || true
-echo "✓ Config paths fixed"
+if [ -f "config_test_10k.yml" ]; then
+    python -c "
+import yaml, os
+with open('config_test_10k.yml', 'r') as f:
+    cfg = yaml.safe_load(f)
+
+base = '/kaggle/working/paddleocr-v5-vietnamese'
+cfg['Global']['character_dict_path'] = os.path.join(base, 'dict/vi_dict.txt')
+cfg['Global']['pretrained_model'] = os.path.join(base, 'pretrain_models/latin_PP-OCRv5_mobile_rec_pretrained.pdparams')
+cfg['Global']['save_model_dir'] = os.path.join(base, 'output/test_10k')
+cfg['Train']['dataset']['data_dir'] = os.path.join(base, 'data/')
+cfg['Train']['dataset']['label_file_list'] = [os.path.join(base, 'data/train_list.txt')]
+cfg['Eval']['dataset']['data_dir'] = os.path.join(base, 'data/')
+cfg['Eval']['dataset']['label_file_list'] = [os.path.join(base, 'data/val_list.txt')]
+
+with open('config_test_10k.yml', 'w') as f:
+    yaml.dump(cfg, f, allow_unicode=True, default_flow_style=False)
+print('✓ Config paths fixed')
+    "
+fi
+echo "✓ Config ready"
 
 # Step 4: Train
 echo -e "\n${BLUE}[4/5]${NC} ${GREEN}Starting test training...${NC}"

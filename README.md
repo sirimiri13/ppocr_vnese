@@ -49,8 +49,7 @@ paddleocr-v5-vietnamese/
 !python prepare_data.py \
     --input_dir /kaggle/input/datasets/sirimiriiii13/vocr-rec/FinalData \
     --output_dir ./data \
-    --max_samples 10000 \
-    --fix_config config_test_10k.yml
+    --max_samples 10000
 
 # Verify
 !wc -l data/train_list.txt data/val_list.txt
@@ -75,8 +74,7 @@ paddleocr-v5-vietnamese/
 # ========== Bước 1-2: Giống trên (nhưng không limit samples) ==========
 !python prepare_data.py \
     --input_dir /kaggle/input/datasets/sirimiriiii13/vocr-rec/FinalData \
-    --output_dir ./data \
-    --fix_config config.yml
+    --output_dir ./data
 
 # ========== Bước 3: Train Full ==========
 !bash train.sh
