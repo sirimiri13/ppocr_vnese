@@ -54,7 +54,7 @@ with open('config.yml', 'r') as f:
 
 base = '/kaggle/working/paddleocr-v5-vietnamese'
 cfg['Global']['character_dict_path'] = os.path.join(base, 'dict/vi_dict.txt')
-cfg['Global']['pretrained_model'] = os.path.join(base, 'pretrain_models/latin_PP-OCRv5_mobile_rec_pretrained.pdparams')
+cfg['Global']['pretrained_model'] = os.path.join(base, 'pretrain_models/PP-OCRv5_mobile_rec_pretrained.pdparams')
 cfg['Global']['save_model_dir'] = os.path.join(base, 'output/vi_ppocr_v5')
 cfg['Train']['dataset']['data_dir'] = os.path.join(base, 'data/')
 cfg['Train']['dataset']['label_file_list'] = [os.path.join(base, 'data/train_list.txt')]

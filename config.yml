@@ -9,7 +9,7 @@ Global:
   save_epoch_step: 10
   eval_batch_step: [0, 500]
   cal_metric_during_train: true
-  pretrained_model: /kaggle/working/ppocr_vnese/pretrain_models/latin_PP-OCRv5_mobile_rec_pretrained.pdparams
+  pretrained_model: /kaggle/working/ppocr_vnese/pretrain_models/PP-OCRv5_mobile_rec_pretrained.pdparams
   checkpoints:
   save_inference_dir:
   use_visualdl: false

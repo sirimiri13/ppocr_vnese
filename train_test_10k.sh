@@ -57,7 +57,7 @@ with open('config_test_10k.yml', 'r') as f:
 base = '/kaggle/working/ppocr_vnese'
 
 cfg['Global']['character_dict_path'] = os.path.join(base, 'dict/vi_dict.txt')
-cfg['Global']['pretrained_model'] = os.path.join(base, 'pretrain_models/latin_PP-OCRv5_mobile_rec_pretrained.pdparams')
+cfg['Global']['pretrained_model'] = os.path.join(base, 'pretrain_models/PP-OCRv5_mobile_rec_pretrained.pdparams')
 cfg['Global']['save_model_dir'] = os.path.join(base, 'output/test_10k')
 cfg['Train']['dataset']['data_dir'] = os.path.join(base, 'data/')
 cfg['Train']['dataset']['label_file_list'] = [os.path.join(base, 'data/train_list.txt')]
