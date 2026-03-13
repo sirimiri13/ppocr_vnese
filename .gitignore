@@ -15,7 +15,6 @@ inference/
 pretrain_models/
 
 # Dictionary (generated)
-dict/
 
 # Logs
 logs/
