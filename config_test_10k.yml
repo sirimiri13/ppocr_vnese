@@ -2,11 +2,11 @@ Global:
   model_name: vietnamese_PP-OCRv5_mobile_rec_test
   debug: false
   use_gpu: true
-  epoch_num: 30 # Test với 30 epochs (thay vì 50)
+  epoch_num: 5
   log_smooth_window: 20
   print_batch_step: 10
   save_model_dir: /kaggle/working/ppocr_vnese/output/test_10k
-  save_epoch_step: 5 # Save thường xuyên hơn
+  save_epoch_step: 30 # Save thường xuyên hơn
   eval_batch_step: [0, 200] # Eval sớm hơn (200 thay vì 500)
   cal_metric_during_train: true
   pretrained_model: /kaggle/working/ppocr_vnese/pretrain_models/PP-OCRv5_mobile_rec_pretrained.pdparams
