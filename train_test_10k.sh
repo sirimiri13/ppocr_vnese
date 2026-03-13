@@ -55,6 +55,7 @@ with open('config_test_10k.yml', 'r') as f:
     cfg = yaml.safe_load(f)
 
 base = '/kaggle/working/ppocr_vnese'
+
 cfg['Global']['character_dict_path'] = os.path.join(base, 'dict/vi_dict.txt')
 cfg['Global']['pretrained_model'] = os.path.join(base, 'pretrain_models/latin_PP-OCRv5_mobile_rec_pretrained.pdparams')
 cfg['Global']['save_model_dir'] = os.path.join(base, 'output/test_10k')
@@ -89,8 +90,8 @@ cd PaddleOCR
 python -m paddle.distributed.launch \
     --gpus '0,1' \
     tools/train.py \
-    -c /kaggle/working/paddleocr-v5-vietnamese/config_test_10k.yml \
-    2>&1 | tee /kaggle/working/paddleocr-v5-vietnamese/$LOG_FILE
+    -c /kaggle/working/ppocr_vnese/config_test_10k.yml \
+    2>&1 | tee /kaggle/working/ppocr_vnese/$LOG_FILE
 
 cd ..
 
