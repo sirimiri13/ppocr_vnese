@@ -2,7 +2,7 @@ Global:
   model_name: vietnamese_PP-OCRv5_mobile_rec_test
   debug: false
   use_gpu: true
-  epoch_num: 5
+  epoch_num: 30
   log_smooth_window: 20
   print_batch_step: 10
   save_model_dir: /kaggle/working/ppocr_vnese/output/test_10k
