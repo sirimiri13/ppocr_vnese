@@ -2,12 +2,12 @@ Global:
   model_name: vietnamese_PP-OCRv5_mobile_rec_test
   debug: false
   use_gpu: true
-  epoch_num: 30
+  epoch_num: 30 # Test với 30 epochs (thay vì 50)
   log_smooth_window: 20
   print_batch_step: 10
   save_model_dir: /kaggle/working/ppocr_vnese/output/test_10k
-  save_epoch_step: 5
-  eval_batch_step: [0, 200]
+  save_epoch_step: 5 # Save thường xuyên hơn
+  eval_batch_step: [0, 200] # Eval sớm hơn (200 thay vì 500)
   cal_metric_during_train: true
   pretrained_model: /kaggle/working/ppocr_vnese/pretrain_models/PP-OCRv5_mobile_rec_pretrained.pdparams
   checkpoints:
@@ -29,7 +29,7 @@ Optimizer:
   lr:
     name: Cosine
     learning_rate: 0.0005
-    warmup_epoch: 3
+    warmup_epoch: 3 # Warmup ngắn hơn cho test
   regularizer:
     name: L2
     factor: 3.0e-05
@@ -43,9 +43,6 @@ Architecture:
     scale: 0.95
   Head:
     name: MultiHead
-    out_channels_list:
-      CTCLabelDecode: 137
-      NRTRLabelDecode: 140
     head_list:
       - CTCHead:
           Neck:

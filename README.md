@@ -1,6 +1,6 @@
 # PaddleOCR Vietnamese - Production Ready
 
-Dựa trên notebook thành công với accuracy 90%+ 
+Dựa trên notebook thành công với accuracy 90%+
 
 ## 🎯 Điểm Nổi Bật
 
@@ -14,18 +14,19 @@ Dựa trên notebook thành công với accuracy 90%+
 ## 🔥 **THAY ĐỔI QUAN TRỌNG:**
 
 ### **So với baseline:**
-| Parameter | Baseline | **Optimized** | Lý do |
-|-----------|----------|---------------|-------|
-| Image width | 320 | **640** | Text dài hơn, rõ hơn |
-| Max length | 40 | **96** | Hỗ trợ câu dài |
-| Batch size | 128 | **8** | Tránh OOM trên T4 |
-| First BS | 128 | **32** | Ổn định memory |
-| Epochs | 100 | **50** | Đủ để converge |
+
+| Parameter   | Baseline | **Optimized** | Lý do                |
+| ----------- | -------- | ------------- | -------------------- |
+| Image width | 320      | **640**       | Text dài hơn, rõ hơn |
+| Max length  | 40       | **96**        | Hỗ trợ câu dài       |
+| Batch size  | 128      | **8**         | Tránh OOM trên T4    |
+| First BS    | 128      | **32**        | Ổn định memory       |
+| Epochs      | 100      | **50**        | Đủ để converge       |
 
 ## 📁 Cấu Trúc Project
 
 ```
-paddleocr-v5-vietnamese/
+ppocr_vnese/
 ├── README.md                # Hướng dẫn
 ├── requirements.txt         # Dependencies
 ├── config.yml              # Config tối ưu (width=640, len=96)
@@ -41,8 +42,8 @@ paddleocr-v5-vietnamese/
 ```python
 # ========== Bước 1: Setup ==========
 %cd /kaggle/working
-!git clone https://github.com/YOUR_USERNAME/paddleocr-v5-vietnamese.git
-%cd paddleocr-v5-vietnamese
+!git clone https://github.com/YOUR_USERNAME/ppocr_vnese.git
+%cd ppocr_vnese
 !bash setup_kaggle.sh
 
 # ========== Bước 2: Prepare Data (10k samples) ==========
@@ -62,8 +63,9 @@ paddleocr-v5-vietnamese/
 ```
 
 **Kết quả mong đợi:**
+
 - Epoch 10: ~60-70% acc
-- Epoch 20: ~75-80% acc  
+- Epoch 20: ~75-80% acc
 - Epoch 30: **80-85% acc** ✅
 
 ---
@@ -89,9 +91,9 @@ Sau khi train xong:
 ```python
 # Inference với model vừa train
 !cd PaddleOCR && python tools/infer_rec.py \
-    -c /kaggle/working/paddleocr-v5-vietnamese/config.yml \
-    -o Global.checkpoints=/kaggle/working/paddleocr-v5-vietnamese/output/vi_ppocr_v5/best_accuracy \
-       Global.infer_img=/kaggle/working/paddleocr-v5-vietnamese/data/val_data \
+    -c /kaggle/working/ppocr_vnese/config.yml \
+    -o Global.checkpoints=/kaggle/working/ppocr_vnese/output/vi_ppocr_v5/best_accuracy \
+       Global.infer_img=/kaggle/working/ppocr_vnese/data/val_data \
        Global.save_res_path=/kaggle/working/results.txt
 
 # Xem kết quả
@@ -99,6 +101,7 @@ Sau khi train xong:
 ```
 
 **Kết quả mẫu (>90% accuracy):**
+
 ```
 vocr_12345.jpg	quyền 1	0.9234
 vocr_12346.jpg	Hiếu Thuần Hoàng Đế	0.8887
@@ -113,9 +116,9 @@ vocr_12347.jpg	Định lệ thuế mắm muối	0.9230
 # Giảm batch size trong config.yml
 Train:
   loader:
-    batch_size_per_card: 4  # Giảm từ 8 xuống 4
+    batch_size_per_card: 4 # Giảm từ 8 xuống 4
   sampler:
-    first_bs: 16  # Giảm từ 32 xuống 16
+    first_bs: 16 # Giảm từ 32 xuống 16
 ```
 
 ### **Nếu muốn train nhanh hơn (trade accuracy):**
@@ -123,23 +126,23 @@ Train:
 ```yaml
 # Giảm image width
 Global:
-  d2s_train_image_shape: [3, 48, 320]  # Giảm từ 640 xuống 320
+  d2s_train_image_shape: [3, 48, 320] # Giảm từ 640 xuống 320
 
 Train:
   dataset:
     transforms:
       - RecConAug:
-          image_shape: [48, 320, 3]  # Giảm width
+          image_shape: [48, 320, 3] # Giảm width
   sampler:
-    scales: [[320, 32], [320, 48], [320, 64]]  # Giảm width
+    scales: [[320, 32], [320, 48], [320, 64]] # Giảm width
   loader:
-    batch_size_per_card: 16  # Tăng batch size
+    batch_size_per_card: 16 # Tăng batch size
 
 Eval:
   dataset:
     transforms:
       - RecResizeImg:
-          image_shape: [3, 48, 320]  # Giảm width
+          image_shape: [3, 48, 320] # Giảm width
 ```
 
 ## 📊 Config Highlights
@@ -148,44 +151,47 @@ Eval:
 # config.yml - Production Ready
 
 Global:
-  epoch_num: 50               # Đủ để converge (từ notebook thành công)
-  max_text_length: 96         # Gấp đôi baseline (40→96)
-  d2s_train_image_shape: [3, 48, 640]  # Width 640 (gấp đôi 320)
-  pretrained_model: latin_PP-OCRv5_mobile  # Latin pretrained
+  epoch_num: 50 # Đủ để converge (từ notebook thành công)
+  max_text_length: 96 # Gấp đôi baseline (40→96)
+  d2s_train_image_shape: [3, 48, 640] # Width 640 (gấp đôi 320)
+  pretrained_model: latin_PP-OCRv5_mobile # Latin pretrained
 
 Optimizer:
-  learning_rate: 0.0005       # Tối ưu cho Vietnamese
-  warmup_epoch: 5             # Ổn định
-  
+  learning_rate: 0.0005 # Tối ưu cho Vietnamese
+  warmup_epoch: 5 # Ổn định
+
 Train:
-  batch_size_per_card: 8      # Safe cho T4 GPU (thay vì 128!)
+  batch_size_per_card: 8 # Safe cho T4 GPU (thay vì 128!)
   sampler:
-    first_bs: 32              # Memory safe (thay vì 128!)
-    scales: [[640,32], [640,48], [640,64]]  # Width 640
+    first_bs: 32 # Memory safe (thay vì 128!)
+    scales: [[640, 32], [640, 48], [640, 64]] # Width 640
   RecConAug:
     image_shape: [48, 640, 3] # HWC format
-    max_text_length: 96       # Hỗ trợ text dài
-  num_workers: 8              # Parallel loading
+    max_text_length: 96 # Hỗ trợ text dài
+  num_workers: 8 # Parallel loading
 
 Eval:
-  batch_size_per_card: 1      # Chính xác nhất
-  image_shape: [3, 48, 640]   # CHW format, width 640
+  batch_size_per_card: 1 # Chính xác nhất
+  image_shape: [3, 48, 640] # CHW format, width 640
 ```
 
 ## 🎯 **TẠI SAO THAY ĐỔI:**
 
 ### **Width 640 (thay vì 320):**
+
 - ✅ Text dài hơn vẫn rõ ràng
 - ✅ Chi tiết tốt hơn cho chữ nhỏ
 - ✅ Accuracy cao hơn ~5-10%
 - ⚠️ Cần giảm batch size (128→8)
 
 ### **Max length 96 (thay vì 40):**
+
 - ✅ Hỗ trợ câu dài (40 ký tự thường bị cắt)
 - ✅ Văn bản cổ có câu rất dài
 - ✅ Không tăng memory đáng kể
 
 ### **Batch size 8 (thay vì 128):**
+
 - ✅ Tránh OOM trên T4 (15GB VRAM)
 - ✅ Width 640 + batch 128 = OOM!
 - ✅ Batch 8 vẫn đủ nhanh với 2 GPUs
@@ -199,17 +205,17 @@ Eval:
 
 ## 📝 Chi Tiết Files
 
-| File | Mô tả |
-|------|-------|
-| `config.yml` | Config cho **full training** (250k, 50 epochs) |
-| `config_test_10k.yml` | Config cho **test 10k** (10k, 30 epochs) |
-| `train.sh` | Train full → >90% accuracy |
-| `train_test_10k.sh` | Train test 10k → 80-85% accuracy |
-| `setup_kaggle.sh` | Setup Paddle 3.2 + PaddleOCR + pretrained |
-| `prepare_data.py` | Chuẩn bị data + fix paths (all-in-one) |
-| `kaggle_notebook.ipynb` | Kaggle notebook template |
-| `CHANGELOG.md` | Chi tiết tất cả optimizations |
-| `requirements.txt` | Dependencies |
+| File                    | Mô tả                                          |
+| ----------------------- | ---------------------------------------------- |
+| `config.yml`            | Config cho **full training** (250k, 50 epochs) |
+| `config_test_10k.yml`   | Config cho **test 10k** (10k, 30 epochs)       |
+| `train.sh`              | Train full → >90% accuracy                     |
+| `train_test_10k.sh`     | Train test 10k → 80-85% accuracy               |
+| `setup_kaggle.sh`       | Setup Paddle 3.2 + PaddleOCR + pretrained      |
+| `prepare_data.py`       | Chuẩn bị data + fix paths (all-in-one)         |
+| `kaggle_notebook.ipynb` | Kaggle notebook template                       |
+| `CHANGELOG.md`          | Chi tiết tất cả optimizations                  |
+| `requirements.txt`      | Dependencies                                   |
 
 **9 files - Production ready!**
 
@@ -220,7 +226,7 @@ Eval:
    ├── Verify setup OK
    ├── Check accuracy ~80%
    └── Debug nếu có lỗi
-   
+
 2. Nếu OK → Train full (12-16h)
    ├── 250k samples
    ├── 50 epochs
@@ -237,6 +243,7 @@ Eval:
 ## 🐛 Troubleshooting
 
 **Q: Accuracy = 0%?**
+
 ```bash
 # Check data
 !wc -l data/train_list.txt
@@ -248,18 +255,20 @@ Eval:
 ```
 
 **Q: Out of memory?**
+
 ```yaml
 # Giảm batch size trong config.yml
 Train:
   loader:
-    batch_size_per_card: 64  # Giảm từ 128
+    batch_size_per_card: 64 # Giảm từ 128
 ```
 
 **Q: Training quá lâu?**
+
 ```yaml
 # Giảm epochs
 Global:
-  epoch_num: 30  # Giảm từ 100 → ~60-70% accuracy
+  epoch_num: 30 # Giảm từ 100 → ~60-70% accuracy
 ```
 
 ---

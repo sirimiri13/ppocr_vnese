@@ -1,13 +1,19 @@
 #!/usr/bin/env python3
 """
 Vietnamese OCR Data Preparation Script
-Tích hợp tất cả logic từ fix_prepare_data.py và fix_config.py
+- Prepares dataset from FinalData format
+- AUTO-GENERATES dictionary from actual training data
+- Fixes config paths and out_channels_list
+
+Usage:
+    python prepare_data.py --input_dir /path/to/FinalData --output_dir ./data --fix_config config.yml
 """
 
 import os
 import sys
 import argparse
 import random
+import unicodedata
 from pathlib import Path
 from tqdm import tqdm
 import yaml
@@ -15,13 +21,13 @@ import yaml
 
 def prepare_dataset(input_dir, output_dir, max_samples=None, train_split=0.9):
     """
-    Prepare dataset từ FinalData format
+    Prepare dataset from FinalData format
     
     Args:
-        input_dir: Thư mục chứa images/ và rec_gt.txt
-        output_dir: Thư mục output
-        max_samples: Giới hạn số samples (None = tất cả)
-        train_split: Tỷ lệ train/val (default 0.9)
+        input_dir: Directory containing images/ and rec_gt.txt
+        output_dir: Output directory
+        max_samples: Limit number of samples (None = all)
+        train_split: Train/val split ratio
     """
     print(f"\n{'='*70}")
     print("PREPARING VIETNAMESE OCR DATASET")
@@ -48,228 +54,285 @@ def prepare_dataset(input_dir, output_dir, max_samples=None, train_split=0.9):
     os.makedirs(os.path.join(output_dir, 'train_data'), exist_ok=True)
     os.makedirs(os.path.join(output_dir, 'val_data'), exist_ok=True)
     
-    # Read labels
+    # Read all labels
     print("📖 Reading labels...")
+    samples = []
+    
     with open(label_file, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
-    
-    total_lines = len(lines)
-    print(f"   Total lines: {total_lines:,}")
-    
-    # Limit samples if specified
-    if max_samples and max_samples < total_lines:
-        random.shuffle(lines)
-        lines = lines[:max_samples]
-        print(f"   Limited to: {max_samples:,} samples")
-    
-    # Process samples
-    print("\n🔄 Processing samples...")
-    train_samples = []
-    val_samples = []
-    valid_count = 0
-    missing_count = 0
-    
-    for line in tqdm(lines, desc="Processing"):
-        line = line.strip()
-        if not line or '\t' not in line:
-            continue
+        for line_num, line in enumerate(f, 1):
+            line = line.strip()
+            if not line:
+                continue
             
-        parts = line.split('\t', 1)
-        if len(parts) < 2:
-            continue
+            parts = line.split('\t')
+            if len(parts) < 2:
+                print(f"⚠️  Line {line_num}: Bad format (no tab separator)")
+                continue
             
-        img_path = parts[0]
-        text = parts[1]
-        
-        # FIX: Remove 'images/' prefix if present (fix_prepare_data.py logic)
-        if img_path.startswith('images/'):
-            img_path = img_path[7:]  # Remove 'images/'
-        
-        # Full path to source image
-        src_img = os.path.join(images_dir, img_path)
-        
-        # Check if image exists
-        if not os.path.exists(src_img):
-            missing_count += 1
-            continue
-        
-        # Split train/val
-        if random.random() < train_split:
-            # Train
-            dst_img = os.path.join(output_dir, 'train_data', img_path)
-            train_samples.append(f"train_data/{img_path}\t{text}\n")
-        else:
-            # Val
-            dst_img = os.path.join(output_dir, 'val_data', img_path)
-            val_samples.append(f"val_data/{img_path}\t{text}\n")
-        
-        # Create symlink or copy
-        os.makedirs(os.path.dirname(dst_img), exist_ok=True)
-        if not os.path.exists(dst_img):
-            try:
-                os.symlink(src_img, dst_img)
-            except:
-                import shutil
-                shutil.copy2(src_img, dst_img)
-        
-        valid_count += 1
+            # Remove 'images/' prefix if exists
+            img_name = parts[0].replace('images/', '').strip()
+            text = parts[1].strip()
+            
+            # Normalize text to NFC
+            text = unicodedata.normalize('NFC', text)
+            
+            # Check image exists
+            img_path = os.path.join(images_dir, img_name)
+            if not os.path.exists(img_path):
+                if line_num <= 10:  # Only warn for first 10
+                    print(f"⚠️  Line {line_num}: Image not found: {img_name}")
+                continue
+            
+            samples.append({
+                'image_path': img_path,
+                'image_name': img_name,
+                'text': text
+            })
     
-    # Save label files
-    print("\n💾 Saving label files...")
+    print(f"✅ Found {len(samples)} valid samples\n")
     
-    train_file = os.path.join(output_dir, 'train_list.txt')
-    with open(train_file, 'w', encoding='utf-8') as f:
-        f.writelines(train_samples)
-    print(f"   Train: {train_file} ({len(train_samples):,} samples)")
+    if len(samples) == 0:
+        print("❌ No valid samples found!")
+        return False
     
-    val_file = os.path.join(output_dir, 'val_list.txt')
-    with open(val_file, 'w', encoding='utf-8') as f:
-        f.writelines(val_samples)
-    print(f"   Val: {val_file} ({len(val_samples):,} samples)")
+    # Limit samples if requested
+    if max_samples and len(samples) > max_samples:
+        print(f"🎯 Limiting to {max_samples} samples")
+        random.shuffle(samples)
+        samples = samples[:max_samples]
     
-    # Summary
-    print(f"\n{'='*70}")
-    print("SUMMARY")
-    print(f"{'='*70}")
-    print(f"✅ Valid samples: {valid_count:,}")
-    print(f"   - Train: {len(train_samples):,} ({len(train_samples)/valid_count*100:.1f}%)")
-    print(f"   - Val: {len(val_samples):,} ({len(val_samples)/valid_count*100:.1f}%)")
+    # Split train/val
+    random.shuffle(samples)
+    split_idx = int(len(samples) * train_split)
+    train_samples = samples[:split_idx]
+    val_samples = samples[split_idx:]
     
-    if missing_count > 0:
-        print(f"⚠️  Missing images: {missing_count:,}")
+    print(f"📊 Split: {len(train_samples)} train, {len(val_samples)} val\n")
     
-    print(f"{'='*70}\n")
+    # Copy files and create lists
+    print("💾 Copying images and creating lists...")
+    
+    train_list = []
+    for i, sample in enumerate(tqdm(train_samples, desc="Train")):
+        # New filename
+        ext = os.path.splitext(sample['image_name'])[1]
+        new_name = f"train_{i:06d}{ext}"
+        dest = os.path.join(output_dir, 'train_data', new_name)
+        
+        # Copy image
+        import shutil
+        shutil.copy2(sample['image_path'], dest)
+        
+        # Add to list
+        train_list.append(f"train_data/{new_name}\t{sample['text']}\n")
+    
+    val_list = []
+    for i, sample in enumerate(tqdm(val_samples, desc="Val")):
+        ext = os.path.splitext(sample['image_name'])[1]
+        new_name = f"val_{i:06d}{ext}"
+        dest = os.path.join(output_dir, 'val_data', new_name)
+        
+        import shutil
+        shutil.copy2(sample['image_path'], dest)
+        
+        val_list.append(f"val_data/{new_name}\t{sample['text']}\n")
+    
+    # Save lists
+    train_list_path = os.path.join(output_dir, 'train_list.txt')
+    val_list_path = os.path.join(output_dir, 'val_list.txt')
+    
+    with open(train_list_path, 'w', encoding='utf-8') as f:
+        f.writelines(train_list)
+    
+    with open(val_list_path, 'w', encoding='utf-8') as f:
+        f.writelines(val_list)
+    
+    print(f"\n✅ Dataset prepared:")
+    print(f"   Train list: {train_list_path} ({len(train_list)} samples)")
+    print(f"   Val list: {val_list_path} ({len(val_list)} samples)")
+    print(f"   Train images: {os.path.join(output_dir, 'train_data/')}")
+    print(f"   Val images: {os.path.join(output_dir, 'val_data/')}\n")
     
     return True
 
 
-def fix_config_paths(config_file, base_dir='/kaggle/working/paddleocr-v5-vietnamese'):
+def generate_dictionary_from_data(data_dir, dict_path):
     """
-    Fix paths trong config file (logic từ fix_config.py)
+    Generate dictionary from actual training data
+    This ensures ALL characters in data are in dictionary
     
     Args:
-        config_file: Path to config YAML file
-        base_dir: Base directory for absolute paths
+        data_dir: Directory containing train_list.txt
+        dict_path: Path to save dictionary
+        
+    Returns:
+        Number of characters in dictionary
     """
-    print(f"\n🔧 Fixing config paths: {config_file}")
+    print(f"\n{'='*70}")
+    print("AUTO-GENERATING DICTIONARY FROM DATA")
+    print(f"{'='*70}\n")
+    
+    train_list = os.path.join(data_dir, 'train_list.txt')
+    
+    if not os.path.exists(train_list):
+        print(f"❌ {train_list} not found")
+        return None
+    
+    # Collect all unique characters
+    all_chars = set()
+    sample_count = 0
+    
+    print("📖 Scanning training data for characters...")
+    with open(train_list, 'r', encoding='utf-8') as f:
+        for line in f:
+            if '\t' in line:
+                text = line.split('\t', 1)[1].strip()
+                # Normalize to NFC
+                text_normalized = unicodedata.normalize('NFC', text)
+                all_chars.update(text_normalized)
+                sample_count += 1
+    
+    # Sort for consistency
+    chars_sorted = sorted(all_chars)
+    
+    print(f"✅ Analyzed {sample_count} samples")
+    print(f"✅ Found {len(chars_sorted)} unique characters\n")
+    print(f"📝 First 30 chars: {chars_sorted[:30]}")
+    print(f"📝 Last 30 chars: {chars_sorted[-30:]}\n")
+    
+    # Save dictionary - 1 character per line (CRITICAL!)
+    os.makedirs(os.path.dirname(dict_path), exist_ok=True)
+    
+    with open(dict_path, 'w', encoding='utf-8') as f:
+        for char in chars_sorted:
+            f.write(char + '\n')
+    
+    print(f"✅ Dictionary saved: {dict_path}")
+    print(f"   Total characters: {len(chars_sorted)}")
+    print(f"   Format: 1 character per line\n")
+    
+    # Verify
+    with open(dict_path, 'r', encoding='utf-8') as f:
+        lines = f.readlines()
+    
+    print(f"📋 Verification:")
+    print(f"   Lines in file: {len(lines)}")
+    print(f"   First 10 chars:")
+    for i, line in enumerate(lines[:10]):
+        char = line.strip()
+        print(f"      {i+1}. '{char}' (len={len(char)})")
+    
+    return len(chars_sorted)
+
+
+def fix_config_paths(config_file, base_dir, char_num=None, dict_path=None):
+    """
+    Fix paths in config and update out_channels_list
+    
+    Args:
+        config_file: Path to config YAML
+        base_dir: Base directory for absolute paths
+        char_num: Number of characters (auto-updates out_channels_list)
+        dict_path: Dictionary path (auto-updates character_dict_path)
+    """
+    print(f"\n{'='*70}")
+    print("FIXING CONFIG")
+    print(f"{'='*70}\n")
     
     if not os.path.exists(config_file):
-        print(f"❌ Config file not found: {config_file}")
+        print(f"❌ Config not found: {config_file}")
         return False
     
-    # Read config
     with open(config_file, 'r', encoding='utf-8') as f:
         config = yaml.safe_load(f)
     
-    # Fix paths
     changed = False
     
-    # Global paths
-    if 'Global' in config:
-        # character_dict_path
-        if 'character_dict_path' in config['Global']:
-            old_path = config['Global']['character_dict_path']
-            if not old_path.startswith('/'):
-                new_path = os.path.join(base_dir, old_path)
-                config['Global']['character_dict_path'] = new_path
-                print(f"   Fixed: character_dict_path")
-                changed = True
-        
-        # pretrained_model
-        if 'pretrained_model' in config['Global'] and config['Global']['pretrained_model']:
-            old_path = config['Global']['pretrained_model']
-            if not old_path.startswith('/'):
-                new_path = os.path.join(base_dir, old_path)
-                config['Global']['pretrained_model'] = new_path
-                print(f"   Fixed: pretrained_model")
-                changed = True
-        
-        # save_model_dir
-        if 'save_model_dir' in config['Global']:
-            old_path = config['Global']['save_model_dir']
-            if not old_path.startswith('/'):
-                new_path = os.path.join(base_dir, old_path)
-                config['Global']['save_model_dir'] = new_path
-                print(f"   Fixed: save_model_dir")
-                changed = True
+    # Update dictionary path
+    if dict_path and 'Global' in config:
+        config['Global']['character_dict_path'] = dict_path
+        print(f"✅ Updated character_dict_path: {dict_path}")
+        changed = True
     
-    # Train dataset paths
+    # Update out_channels_list (CRITICAL!)
+    if char_num and 'Architecture' in config and 'Head' in config['Architecture']:
+        config['Architecture']['Head']['out_channels_list'] = {
+            'CTCLabelDecode': char_num,
+            'NRTRLabelDecode': char_num + 3  # +3 for special tokens
+        }
+        print(f"✅ Updated out_channels_list:")
+        print(f"   CTCLabelDecode: {char_num}")
+        print(f"   NRTRLabelDecode: {char_num + 3}")
+        changed = True
+    
+    # Fix other paths to absolute
+    if 'Global' in config:
+        for key in ['pretrained_model', 'save_model_dir']:
+            if key in config['Global'] and config['Global'][key]:
+                old_path = config['Global'][key]
+                if not os.path.isabs(old_path):
+                    config['Global'][key] = os.path.join(base_dir, old_path)
+                    print(f"   Fixed: {key}")
+                    changed = True
+    
     if 'Train' in config and 'dataset' in config['Train']:
-        # data_dir
         if 'data_dir' in config['Train']['dataset']:
-            old_path = config['Train']['dataset']['data_dir']
-            if not old_path.startswith('/'):
-                new_path = os.path.join(base_dir, old_path)
-                config['Train']['dataset']['data_dir'] = new_path
-                print(f"   Fixed: Train data_dir")
+            old = config['Train']['dataset']['data_dir']
+            if not os.path.isabs(old):
+                config['Train']['dataset']['data_dir'] = os.path.join(base_dir, old)
                 changed = True
         
-        # label_file_list
         if 'label_file_list' in config['Train']['dataset']:
             new_list = []
-            for old_path in config['Train']['dataset']['label_file_list']:
-                if not old_path.startswith('/'):
-                    new_path = os.path.join(base_dir, old_path)
-                    new_list.append(new_path)
-                    changed = True
-                else:
-                    new_list.append(old_path)
+            for old in config['Train']['dataset']['label_file_list']:
+                new_list.append(os.path.join(base_dir, old) if not os.path.isabs(old) else old)
             config['Train']['dataset']['label_file_list'] = new_list
-            print(f"   Fixed: Train label_file_list")
+            changed = True
     
-    # Eval dataset paths
     if 'Eval' in config and 'dataset' in config['Eval']:
-        # data_dir
         if 'data_dir' in config['Eval']['dataset']:
-            old_path = config['Eval']['dataset']['data_dir']
-            if not old_path.startswith('/'):
-                new_path = os.path.join(base_dir, old_path)
-                config['Eval']['dataset']['data_dir'] = new_path
-                print(f"   Fixed: Eval data_dir")
+            old = config['Eval']['dataset']['data_dir']
+            if not os.path.isabs(old):
+                config['Eval']['dataset']['data_dir'] = os.path.join(base_dir, old)
                 changed = True
         
-        # label_file_list
         if 'label_file_list' in config['Eval']['dataset']:
             new_list = []
-            for old_path in config['Eval']['dataset']['label_file_list']:
-                if not old_path.startswith('/'):
-                    new_path = os.path.join(base_dir, old_path)
-                    new_list.append(new_path)
-                    changed = True
-                else:
-                    new_list.append(old_path)
+            for old in config['Eval']['dataset']['label_file_list']:
+                new_list.append(os.path.join(base_dir, old) if not os.path.isabs(old) else old)
             config['Eval']['dataset']['label_file_list'] = new_list
-            print(f"   Fixed: Eval label_file_list")
+            changed = True
     
-    # Save if changed
     if changed:
         with open(config_file, 'w', encoding='utf-8') as f:
-            yaml.dump(config, f, default_flow_style=False, allow_unicode=True)
-        print(f"✅ Config updated: {config_file}\n")
-    else:
-        print(f"✓ Config already has absolute paths\n")
+            yaml.dump(config, f, allow_unicode=True, default_flow_style=False)
+        print(f"\n✅ Config updated: {config_file}\n")
     
     return True
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Prepare Vietnamese OCR dataset')
+    parser = argparse.ArgumentParser(
+        description='Prepare Vietnamese OCR dataset with auto dictionary generation'
+    )
     parser.add_argument('--input_dir', type=str, required=True,
-                        help='Input directory containing images/ and rec_gt.txt')
+                        help='Input directory (contains images/ and rec_gt.txt)')
     parser.add_argument('--output_dir', type=str, default='./data',
                         help='Output directory (default: ./data)')
+    parser.add_argument('--dict_path', type=str, default='./dict/vi_dict.txt',
+                        help='Dictionary output path (default: ./dict/vi_dict.txt)')
     parser.add_argument('--max_samples', type=int, default=None,
-                        help='Maximum number of samples to use')
+                        help='Limit number of samples (default: all)')
     parser.add_argument('--train_split', type=float, default=0.9,
                         help='Train/val split ratio (default: 0.9)')
     parser.add_argument('--fix_config', type=str, default=None,
-                        help='Config file to fix paths (optional)')
-    parser.add_argument('--base_dir', type=str, default='/kaggle/working/paddleocr-v5-vietnamese',
+                        help='Config file to update (optional)')
+    parser.add_argument('--base_dir', type=str, default='/kaggle/working/ppocr_vnese',
                         help='Base directory for config paths')
     
     args = parser.parse_args()
     
-    # Prepare dataset
+    # Step 1: Prepare dataset
     success = prepare_dataset(
         args.input_dir,
         args.output_dir,
@@ -278,13 +341,28 @@ def main():
     )
     
     if not success:
+        print("\n❌ Dataset preparation failed!")
         sys.exit(1)
     
-    # Fix config if specified
-    if args.fix_config:
-        fix_config_paths(args.fix_config, args.base_dir)
+    # Step 2: Generate dictionary from data (AUTO!)
+    char_num = generate_dictionary_from_data(args.output_dir, args.dict_path)
     
-    print("✅ All done!\n")
+    if not char_num:
+        print("\n❌ Dictionary generation failed!")
+        sys.exit(1)
+    
+    # Step 3: Fix config if specified
+    if args.fix_config:
+        fix_config_paths(args.fix_config, args.base_dir, char_num, args.dict_path)
+    
+    print(f"{'='*70}")
+    print("✅ ALL DONE!")
+    print(f"{'='*70}")
+    print(f"Dataset: {args.output_dir}")
+    print(f"Dictionary: {args.dict_path} ({char_num} chars)")
+    if args.fix_config:
+        print(f"Config: {args.fix_config} (updated)")
+    print()
 
 
 if __name__ == '__main__':
